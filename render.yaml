@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: vibna-storage-backend
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      # ── Add all your backend .env values in Render dashboard → Environment ──
+      # DATABASE_URL        → your Neon PostgreSQL connection string
+      # JWT_SECRET          → your JWT secret key
+      # CLOUDINARY_CLOUD_NAME / CLOUDINARY_API_KEY / CLOUDINARY_API_SECRET
+      # FIREBASE_PROJECT_ID → vibna-storage
+      # FRONTEND_URL        → https://vibna-storage.firebaseapp.com
+    healthCheckPath: /health
