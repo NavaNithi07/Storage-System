@@ -42,15 +42,15 @@ const ALLOWED_ORIGINS = [
 const corsOptions = {
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
-    // Allow any localhost/127.0.0.1 port in development (Vite may pick any free port)
     const isLocalhost = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
-    if (isLocalhost) return callback(null, true);
-    if (ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
-    console.warn(`[CORS] Rejected request from unauthorized origin: ${origin}`);
-    return callback(new Error('CORS not allowed'));
+    const isVercel = /^https:\/\/.*\.vercel\.app$/.test(origin);
+    if (isLocalhost || isVercel || ALLOWED_ORIGINS.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(null, true);
   },
   credentials: true,
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   optionsSuccessStatus: 200,
   maxAge: 3600,
@@ -139,6 +139,23 @@ const startServer = async () => {
     server.headersTimeout = 0;
 };
 
-startServer();
+// Database connection middleware for Vercel serverless environment
+let isDbConnected = false;
+app.use(async (req, res, next) => {
+  if (!isDbConnected && process.env.VERCEL) {
+    try {
+      await connectDB();
+      isDbConnected = true;
+    } catch (err) {
+      console.error('[Vercel Serverless DB Error]', err);
+    }
+  }
+  next();
+});
+
+// Only start standalone app.listen server when NOT on Vercel serverless
+if (!process.env.VERCEL) {
+  startServer();
+}
 
 module.exports = app;

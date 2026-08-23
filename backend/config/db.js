@@ -54,7 +54,9 @@ const connectDB = async () => {
                 return connectWithRetry(retries - 1);
             } else {
                 console.error('[DB] Could not connect to PostgreSQL. Check DATABASE_URL in .env');
-                process.exit(1);
+                if (!process.env.VERCEL) {
+                    process.exit(1);
+                }
             }
         }
     };
