@@ -18,7 +18,7 @@ import { AuthContext } from '../context/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
-import vibnaLogo from '../components/vibna.png';
+import vibnaLogo from '../components/Vibna.png';
 
 const COLORS = ['#D4A437', '#B8860B', '#F3E5AB'];
 

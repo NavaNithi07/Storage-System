@@ -3,7 +3,7 @@ import { Outlet, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Settings, LogOut, User, ChevronDown, Circle } from 'lucide-react';
 import Sidebar from './Sidebar';
-import vibnaLogo from '../vibna.png';
+import vibnaLogo from '../Vibna.png';
 import { AuthContext } from '../../context/AuthContext';
 
 const DashboardLayout = () => {

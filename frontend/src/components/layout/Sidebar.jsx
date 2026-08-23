@@ -15,7 +15,7 @@ import {
 import { cn } from '../../lib/utils';
 import { useContext } from 'react';
 import { AuthContext } from '../../context/AuthContext';
-import vibnaLogo from '../vibna.png';
+import vibnaLogo from '../Vibna.png';
 
 const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },

@@ -6,7 +6,7 @@ import { Loader2, Mail, Lock, User, ArrowRight, ShieldCheck, CheckCircle2, Alert
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Card } from '../components/ui/Card';
-import vibnaLogo from '../components/vibna.png';
+import vibnaLogo from '../components/Vibna.png';
 import { signInWithPopup, signInWithRedirect, getRedirectResult, signOut as firebaseSignOut } from 'firebase/auth';
 import { auth, googleProvider, firebaseConfigured } from '../firebase';
 

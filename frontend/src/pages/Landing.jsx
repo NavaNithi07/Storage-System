@@ -34,7 +34,7 @@ import {
   Star,
   Trash2
 } from 'lucide-react';
-import vibnaLogo from '../components/vibna.png';
+import vibnaLogo from '../components/Vibna.png';
 import { AuthContext } from '../context/AuthContext';
 
 export default function Landing() {

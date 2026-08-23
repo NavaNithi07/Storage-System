@@ -7,7 +7,7 @@ import {
 } from 'recharts';
 import { Cloud, HardDrive, FileText, Image as ImageIcon, Video, ArrowUpRight, ShieldCheck, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/Card';
-import vibnaLogo from '../components/vibna.png';
+import vibnaLogo from '../components/Vibna.png';
 import api from '../services/api';
 import { useFileContext } from '../context/FileContext';
 

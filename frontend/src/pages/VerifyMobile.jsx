@@ -3,7 +3,7 @@ import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Loader2, Phone, ArrowRight, ShieldCheck, AlertTriangle } from 'lucide-react';
-import vibnaLogo from '../components/vibna.png';
+import vibnaLogo from '../components/Vibna.png';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Card } from '../components/ui/Card';
