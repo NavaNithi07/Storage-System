@@ -3,17 +3,26 @@ services:
     name: vibna-storage-backend
     runtime: node
     rootDir: backend
-    buildCommand: npm install
+    buildCommand: npm install --production=false
     startCommand: node server.js
+    plan: free
+    autoDeploy: true
     envVars:
       - key: NODE_ENV
         value: production
       - key: PORT
         value: 10000
-      # ── Add all your backend .env values in Render dashboard → Environment ──
-      # DATABASE_URL        → your Neon PostgreSQL connection string
-      # JWT_SECRET          → your JWT secret key
-      # CLOUDINARY_CLOUD_NAME / CLOUDINARY_API_KEY / CLOUDINARY_API_SECRET
-      # FIREBASE_PROJECT_ID → vibna-storage
-      # FRONTEND_URL        → https://vibna-storage.firebaseapp.com
+      # ── Add ALL backend secrets in Render dashboard → Environment ──────────
+      # DATABASE_URL              → Neon PostgreSQL connection string
+      # JWT_SECRET                → JWT signing secret
+      # JWT_REFRESH_SECRET        → JWT refresh token secret
+      # CLOUDINARY_CLOUD_NAME     → Cloudinary cloud name
+      # CLOUDINARY_API_KEY        → Cloudinary API key
+      # CLOUDINARY_API_SECRET     → Cloudinary API secret
+      # FIREBASE_PROJECT_ID       → vibna-storage
+      # FIREBASE_CLIENT_EMAIL     → Firebase service account email
+      # FIREBASE_PRIVATE_KEY      → Firebase service account private key
+      # FRONTEND_URL              → https://your-frontend-url.vercel.app
+      # SMTP_HOST / SMTP_PORT / SMTP_USER / SMTP_PASS → Email credentials
     healthCheckPath: /health
+    # Render free tier spins down after inactivity — keep-alive is handled by /health
