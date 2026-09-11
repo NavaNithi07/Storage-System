@@ -94,6 +94,23 @@ app.use((req, res, next) => {
   next();
 });
 
+// ── Root Route ───────────────────────────────────────────────────────────────
+app.get('/', (req, res) => {
+  res.status(200).json({
+    name: 'VIBNA Storage API',
+    version: '1.0.0',
+    status: 'running',
+    environment: process.env.NODE_ENV || 'development',
+    endpoints: {
+      health: '/health',
+      auth: '/api/auth',
+      files: '/api/files',
+      admin: '/api/admin',
+    },
+    timestamp: new Date().toISOString(),
+  });
+});
+
 // ── Health Check Endpoint (for Render / uptime monitoring) ───────────────────
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
