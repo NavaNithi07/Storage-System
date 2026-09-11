@@ -64,9 +64,9 @@ export default function Landing() {
 
       {/* ─── 1. NAVBAR ───────────────────────────────────────────────────────── */}
       <header className="sticky top-0 z-50 backdrop-blur-2xl bg-[#050505]/85 border-b border-white/10 transition-all">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          {/* Brand Logo */}
-          <Link to="/" className="flex items-center gap-3 group">
+        {/* Logo pinned to absolute top-left corner */}
+        <div className="w-full h-20 flex items-center px-4 lg:px-6">
+          <Link to="/" className="flex items-center gap-3 group shrink-0">
             <div className="w-10 h-10 rounded-xl bg-[#111111] border border-[#d4af37]/40 flex items-center justify-center p-1.5 shadow-[0_0_20px_rgba(212,164,55,0.25)] group-hover:scale-105 transition-transform">
               <img src={vibnaLogo} alt="VIBNA Logo" className="w-full h-full object-contain" />
             </div>
@@ -75,8 +75,8 @@ export default function Landing() {
             </span>
           </Link>
 
-          {/* Center Links */}
-          <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-300">
+          {/* Center Links — flex-1 centers them between logo and buttons */}
+          <nav className="hidden md:flex flex-1 items-center justify-center gap-8 text-sm font-semibold text-slate-300">
             <a href="#home" className="text-white hover:text-[#d4af37] transition-colors border-b-2 border-[#d4af37] pb-1">Home</a>
             <a href="#features" className="hover:text-[#d4af37] transition-colors">Features</a>
             <a href="#security" className="hover:text-[#d4af37] transition-colors">Security</a>
@@ -84,8 +84,8 @@ export default function Landing() {
             <a href="#about" className="hover:text-[#d4af37] transition-colors">About</a>
           </nav>
 
-          {/* Action Buttons */}
-          <div className="flex items-center gap-3">
+          {/* Action Buttons — pinned to right */}
+          <div className="flex items-center gap-3 ml-auto">
             {user ? (
               <Link
                 to={user.role === 'admin' ? '/admin/dashboard' : '/dashboard'}
@@ -115,7 +115,7 @@ export default function Landing() {
       </header>
 
       {/* ─── 2. HERO SECTION ─────────────────────────────────────────────────── */}
-      <section id="home" className="relative z-10 pt-16 pb-20 px-6 max-w-7xl mx-auto">
+      <section id="home" className="relative z-10 pt-16 pb-20 px-6 sm:px-10 lg:px-16 max-w-[1440px] mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           {/* Left Hero Text Column */}
           <div className="lg:col-span-6 flex flex-col items-start text-left">
@@ -345,7 +345,7 @@ export default function Landing() {
       </section>
 
       {/* ─── 3. 4-COLUMN FEATURE BAR (BELOW HERO) ────────────────────────────── */}
-      <section className="relative z-10 py-8 px-6 max-w-7xl mx-auto border-y border-white/10 bg-[#0A0A0A]/80 backdrop-blur-xl">
+      <section className="relative z-10 py-8 px-6 sm:px-10 lg:px-16 max-w-[1440px] mx-auto border-y border-white/10 bg-[#0A0A0A]/80 backdrop-blur-xl">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Col 1 */}
           <div className="flex items-start gap-3.5">
@@ -394,7 +394,7 @@ export default function Landing() {
       </section>
 
       {/* ─── 4. FEATURES GRID ────────────────────────────────────────────────── */}
-      <section id="features" className="relative z-10 py-20 px-6 max-w-7xl mx-auto">
+      <section id="features" className="relative z-10 py-20 px-6 sm:px-10 lg:px-16 max-w-[1440px] mx-auto">
         <div className="text-center max-w-2xl mx-auto mb-14">
           <span className="text-xs font-extrabold text-[#d4af37] uppercase tracking-widest">FEATURES</span>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mt-2">
@@ -472,7 +472,7 @@ export default function Landing() {
       </section>
 
       {/* ─── 5. SECURITY SECTION ─────────────────────────────────────────────── */}
-      <section id="security" className="relative z-10 py-20 px-6 max-w-7xl mx-auto border-t border-white/10">
+      <section id="security" className="relative z-10 py-20 px-6 sm:px-10 lg:px-16 max-w-[1440px] mx-auto border-t border-white/10">
         <div className="text-center max-w-3xl mx-auto mb-12">
           <span className="text-xs font-extrabold text-[#d4af37] uppercase tracking-widest">SECURITY</span>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mt-2">
@@ -536,7 +536,7 @@ export default function Landing() {
       </section>
 
       {/* ─── 6. HOW IT WORKS SECTION ─────────────────────────────────────────── */}
-      <section id="how-it-works" className="relative z-10 py-20 px-6 max-w-7xl mx-auto border-t border-white/10">
+      <section id="how-it-works" className="relative z-10 py-20 px-6 sm:px-10 lg:px-16 max-w-[1440px] mx-auto border-t border-white/10">
         <div className="text-center max-w-2xl mx-auto mb-14">
           <span className="text-xs font-extrabold text-[#d4af37] uppercase tracking-widest">HOW IT WORKS</span>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mt-2">
@@ -597,7 +597,7 @@ export default function Landing() {
       </section>
 
       {/* ─── 7. SUPPORTS ALL FILE TYPES (SPLIT DASHBOARD SHOWCASE) ───────────── */}
-      <section className="relative z-10 py-20 px-6 max-w-7xl mx-auto border-t border-white/10">
+      <section className="relative z-10 py-20 px-6 sm:px-10 lg:px-16 max-w-[1440px] mx-auto border-t border-white/10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           {/* Left Description Column */}
           <div className="lg:col-span-4 flex flex-col items-start text-left">
@@ -747,7 +747,7 @@ export default function Landing() {
       </section>
 
       {/* ─── 8. BOTTOM CTA BANNER ────────────────────────────────────────────── */}
-      <section className="relative z-10 py-16 px-6 max-w-7xl mx-auto">
+      <section className="relative z-10 py-16 px-6 sm:px-10 lg:px-16 max-w-[1440px] mx-auto">
         <div className="p-8 sm:p-12 rounded-3xl bg-[#0F0F0F] border border-[#d4af37]/30 shadow-[0_0_50px_rgba(212,164,55,0.15)] flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-5">
             <div className="p-4 rounded-2xl bg-[#d4af37]/15 border border-[#d4af37]/30 text-[#d4af37] shrink-0">
@@ -777,8 +777,8 @@ export default function Landing() {
       </section>
 
       {/* ─── 9. FOOTER ───────────────────────────────────────────────────────── */}
-      <footer id="about" className="relative z-10 border-t border-white/10 bg-[#030303] pt-16 pb-12 px-6">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-10 pb-12 border-b border-white/10 text-slate-400 text-sm">
+      <footer id="about" className="relative z-10 border-t border-white/10 bg-[#030303] pt-16 pb-12 px-6 sm:px-10 lg:px-16">
+        <div className="max-w-[1440px] mx-auto grid grid-cols-1 md:grid-cols-12 gap-10 pb-12 border-b border-white/10 text-slate-400 text-sm">
           {/* Col 1: Brand */}
           <div className="md:col-span-4 space-y-4">
             <div className="flex items-center gap-3">
@@ -828,7 +828,7 @@ export default function Landing() {
         </div>
 
         {/* Copyright Bar */}
-        <div className="max-w-7xl mx-auto mt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500">
+        <div className="max-w-[1440px] mx-auto mt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500">
           <span>© {new Date().getFullYear()} VIBNA Storage. All rights reserved.</span>
         </div>
       </footer>

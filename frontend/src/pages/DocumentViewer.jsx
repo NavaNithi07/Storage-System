@@ -38,6 +38,7 @@ export default function DocumentViewer() {
   const [showPassword, setShowPassword] = useState(false);
   const [passwordError, setPasswordError] = useState('');
   const [activePassword, setActivePassword] = useState('');
+  const [verifyingPassword, setVerifyingPassword] = useState(false);
 
   const toast = useToast();
   const { removeToast } = useToastApi();
@@ -69,32 +70,17 @@ export default function DocumentViewer() {
   useEffect(() => { console.log('[DocumentViewer] mount id=', id); return () => console.log('[DocumentViewer] unmount id=', id); }, [id]);
 
   const fetchFile = async (pwdToTry = activePassword) => {
-    setLoading(true);
+    if (!requiresPassword) {
+      setLoading(true);
+    }
     setError(null);
     setPasswordError('');
     try {
       const token = localStorage.getItem('token');
-      
-      // If user is authenticated, attempt owner access first.
-      // If the user owns the file, /files/:id returns the file directly without password or limit restrictions.
-      if (token) {
-        const targetId = id || shareToken;
-        if (targetId) {
-          try {
-            const { data: authData } = await api.get(`/files/${encodeURIComponent(targetId)}`);
-            if (authData) {
-              setRequiresPassword(false);
-              setFile(authData);
-              return;
-            }
-          } catch (authErr) {
-            // Not owner or invalid ID — fall through to public share access logic
-          }
-        }
-      }
 
+      // ── PATH A: Opened via a share link ──────────────────────────────────────
+      // Password gate is ONLY enforced here (share links).
       if (shareToken) {
-        // Public share access via share token — for external / non-owner visitors.
         let endpoint = `/files/share/${encodeURIComponent(shareToken)}`;
         if (pwdToTry) endpoint += `?password=${encodeURIComponent(pwdToTry)}`;
 
@@ -102,31 +88,49 @@ export default function DocumentViewer() {
         const response = await fetch(`${API_BASE_URL}${endpoint}`, { headers });
         const data = await response.json();
 
-        if (!response.ok) {
-          if (response.status === 401 && data.requiresPassword) {
-            setRequiresPassword(true);
-            if (pwdToTry) setPasswordError('Incorrect password. Please try again.');
-            return;
-          }
-
-          if (response.status === 410) {
-            throw new Error(data.message || 'This share link has expired or reached view limits.');
-          }
-          throw new Error(data.message || 'Failed to load document');
-        }
-
-        setRequiresPassword(false);
-        setFile(data);
-      } else {
-        // File ID (UUID) — authenticated access by file owner.
-        if (!token) {
-          navigate(`/login?redirect=/viewer/${encodeURIComponent(id)}`, { replace: true });
+        if (response.ok) {
+          setRequiresPassword(false);
+          setFile(data);
           return;
         }
-        
-        const { data } = await api.get(`/files/${id}`);
-        setFile(data);
+
+        if (response.status === 401 && data.requiresPassword) {
+          setRequiresPassword(true);
+          if (pwdToTry) setPasswordError('Incorrect password. Please try again.');
+          return;
+        }
+
+        if (response.status === 410) {
+          throw new Error(data.message || 'This share link has expired or reached view limits.');
+        }
+
+        throw new Error(data.message || 'Failed to load shared document');
       }
+
+      // ── PATH B: Opened directly (dashboard click) ─────────────────────────────
+      // Owner access — never ask for a password.
+      if (token) {
+        try {
+          const { data: authData } = await api.get(`/files/${encodeURIComponent(id)}`);
+          if (authData) {
+            setRequiresPassword(false);
+            setFile(authData);
+            return;
+          }
+        } catch (authErr) {
+          const status = authErr.response?.status;
+          if (status === 401 || status === 403) {
+            navigate('/login', { replace: true });
+            return;
+          }
+          throw authErr;
+        }
+      } else {
+        navigate(`/login?redirect=/viewer/${encodeURIComponent(id)}`, { replace: true });
+        return;
+      }
+
+      throw new Error('Failed to load document');
     } catch (err) {
       const status = err.response?.status || err.status;
       const errorMsg = err.response?.data?.message || err.message || 'Failed to load document';
@@ -136,7 +140,7 @@ export default function DocumentViewer() {
         navigate('/login', { replace: true });
         return;
       }
-      
+
       setError(errorMsg);
     } finally {
       setLoading(false);
@@ -147,11 +151,14 @@ export default function DocumentViewer() {
     fetchFile();
   }, [id, shareToken, navigate]);
 
-  const handlePasswordSubmit = (e) => {
+  const handlePasswordSubmit = async (e) => {
     e.preventDefault();
-    if (!passwordInput) return;
+    if (!passwordInput || verifyingPassword) return;
+    setVerifyingPassword(true);
+    setPasswordError('');
     setActivePassword(passwordInput);
-    fetchFile(passwordInput);
+    await fetchFile(passwordInput);
+    setVerifyingPassword(false);
   };
 
   useEffect(() => {
@@ -229,9 +236,12 @@ export default function DocumentViewer() {
   const currentUserId = currentUser?._id || currentUser?.id || tokenPayload?.id || tokenPayload?._id;
   const isOwner = file?.isOwner === true || !!(file && currentUserId && (file.userId === currentUserId || file.user === currentUserId));
 
+  const isViewingViaShare = Boolean(shareToken);
+  const activeShareIdentifier = shareToken;
+
   const getMediaFetchUrl = () => {
-    if (shareToken && !isOwner) {
-      let u = `${API_BASE_URL}/files/download-shared/${encodeURIComponent(shareToken)}`;
+    if (isViewingViaShare && activeShareIdentifier) {
+      let u = `${API_BASE_URL}/files/download-shared/${encodeURIComponent(activeShareIdentifier)}`;
       if (activePassword) u += `?password=${encodeURIComponent(activePassword)}`;
       return u;
     }
@@ -240,8 +250,8 @@ export default function DocumentViewer() {
 
   const pdfUrl = useMemo(() => {
     if (!isPdf || !file) return null;
-    if (shareToken && !isOwner) {
-      let u = `${API_BASE_URL}/files/download-shared/${encodeURIComponent(shareToken)}`;
+    if (isViewingViaShare && activeShareIdentifier) {
+      let u = `${API_BASE_URL}/files/download-shared/${encodeURIComponent(activeShareIdentifier)}`;
       if (activePassword) u += `?password=${encodeURIComponent(activePassword)}`;
       return u;
     }
@@ -249,7 +259,7 @@ export default function DocumentViewer() {
       return `${API_BASE_URL}/files/preview/${fileId}?token=${encodeURIComponent(_authToken || '')}`;
     }
     return null;
-  }, [isPdf, file, shareToken, isOwner, activePassword, fileId, _authToken]);
+  }, [isPdf, file, isViewingViaShare, activeShareIdentifier, activePassword, fileId, _authToken]);
 
   const pdfSource = useMemo(() => (pdfUrl ? { url: pdfUrl } : null), [pdfUrl]);
 
@@ -668,8 +678,8 @@ export default function DocumentViewer() {
     const startId = toast(`Downloading ${file.filename}...`, 'info', 60000);
     try {
       const token = localStorage.getItem('token');
-      let url = shareToken
-        ? `${API_BASE_URL}/files/download-shared/${encodeURIComponent(shareToken)}?dl=1`
+      let url = (isViewingViaShare && activeShareIdentifier)
+        ? `${API_BASE_URL}/files/download-shared/${encodeURIComponent(activeShareIdentifier)}?dl=1`
         : `${API_BASE_URL}/files/download/${fileId}?dl=1`;
 
       if (activePassword) {
@@ -677,7 +687,7 @@ export default function DocumentViewer() {
       }
       
       const headers = {};
-      if (token && !shareToken) headers.Authorization = `Bearer ${token}`;
+      if (token && !isViewingViaShare) headers.Authorization = `Bearer ${token}`;
       
       const res = await fetch(url, { headers });
 
@@ -750,6 +760,7 @@ export default function DocumentViewer() {
                 onChange={(e) => setPasswordInput(e.target.value)}
                 className="w-full text-center tracking-widest text-lg py-3 px-10 bg-black border border-zinc-800 rounded-xl text-white focus:border-[#d4af37] focus:outline-none"
                 autoFocus
+                disabled={verifyingPassword}
               />
               <button
                 type="button"
@@ -765,9 +776,17 @@ export default function DocumentViewer() {
             )}
             <button
               type="submit"
-              className="w-full bg-[#d4af37] hover:bg-[#c2a030] text-black font-bold h-12 rounded-xl transition-all shadow-lg"
+              disabled={verifyingPassword || !passwordInput.trim()}
+              className="w-full bg-[#d4af37] hover:bg-[#c2a030] disabled:opacity-50 disabled:cursor-not-allowed text-black font-bold h-12 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2"
             >
-              Unlock Document
+              {verifyingPassword ? (
+                <>
+                  <Loader2 size={18} className="animate-spin text-black" />
+                  <span>Unlocking...</span>
+                </>
+              ) : (
+                <span>Unlock Document</span>
+              )}
             </button>
           </form>
         </div>
@@ -815,20 +834,15 @@ export default function DocumentViewer() {
       {/* Top Toolbar */}
       <header className="flex items-center justify-between px-4 py-3 bg-[#111111]/90 backdrop-blur-md border-b border-[#d4af37]/20 z-20 shrink-0 h-14 shadow-lg">
         <div className="flex items-center gap-4 flex-1 overflow-hidden">
-          <button
-            onClick={() => {
-              if (shareToken && window.history.length <= 1) {
-                // Opened directly from external link (WhatsApp, email etc.) — go to login/home
-                navigate('/');
-              } else {
-                navigate(-1);
-              }
-            }}
-            className="p-2 bg-transparent hover:bg-[#d4af37]/10 rounded transition-colors text-slate-400 hover:text-[#d4af37] shrink-0"
-            title="Go Back"
-          >
-            <ArrowLeft size={18} />
-          </button>
+          {!shareToken && (
+            <button
+              onClick={() => navigate(-1)}
+              className="p-2 bg-transparent hover:bg-[#d4af37]/10 rounded transition-colors text-slate-400 hover:text-[#d4af37] shrink-0"
+              title="Go Back"
+            >
+              <ArrowLeft size={18} />
+            </button>
+          )}
           
           <div className="flex flex-col overflow-hidden">
             <h1 className="text-sm font-medium text-gray-200 truncate" title={file.filename}>

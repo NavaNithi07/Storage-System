@@ -118,28 +118,8 @@ export default function HistoryItem({ file, onDelete, onUpdate }) {
     }
   };
 
-  const handleGenerateShare = async () => {
-    // If the file is already shared, open the ShareModal directly with existing settings & token
-    if (file.isShared && file.shareToken) {
-      setIsShareModalOpen(true);
-      return;
-    }
-
-    try {
-      setIsGeneratingShare(true);
-      const res = await api.post(`/files/${fileId}/generate-share`);
-
-      // Mutate the file ref so ShareModal can build the canonical URL from shareToken
-      file.isShared = true;
-      file.shareToken = res.data.shareToken;
-
-      setIsShareModalOpen(true);
-    } catch (err) {
-      console.error('Failed to generate share link:', err);
-      toast('Failed to generate share link', 'error');
-    } finally {
-      setIsGeneratingShare(false);
-    }
+  const handleGenerateShare = () => {
+    setIsShareModalOpen(true);
   };
 
 

@@ -303,8 +303,18 @@ const downloadFile = asyncHandler(async (req, res) => {
     let isAuthorized = false;
 
     if (shareToken) {
-        if (file.shareToken === shareToken) { isAuthorized = true; }
-        else return res.status(401).json({ message: 'Invalid share token' });
+        if (file.shareToken === shareToken) {
+            if (file.sharePassword) {
+                const { password } = req.query;
+                if (!password) return res.status(401).json({ message: 'Password required', requiresPassword: true });
+                const bcrypt = require('bcrypt');
+                const isMatch = await bcrypt.compare(password, file.sharePassword);
+                if (!isMatch) return res.status(401).json({ message: 'Invalid password', requiresPassword: true });
+            }
+            isAuthorized = true;
+        } else {
+            return res.status(401).json({ message: 'Invalid share token' });
+        }
     } else if (req.user) {
         if (file.userId === getUserId(req)) { isAuthorized = true; }
         else {
@@ -441,7 +451,16 @@ const previewFile = asyncHandler(async (req, res) => {
     let isAuthorized = false;
 
     if (shareToken) {
-        if (file.shareToken === shareToken) isAuthorized = true;
+        if (file.shareToken === shareToken) {
+            if (file.sharePassword) {
+                const { password } = req.query;
+                if (!password) return res.status(401).json({ message: 'Password required', requiresPassword: true });
+                const bcrypt = require('bcrypt');
+                const isMatch = await bcrypt.compare(password, file.sharePassword);
+                if (!isMatch) return res.status(401).json({ message: 'Invalid password', requiresPassword: true });
+            }
+            isAuthorized = true;
+        }
     } else if (req.user) {
         if (file.userId === getUserId(req)) isAuthorized = true;
     }
@@ -849,15 +868,15 @@ const getFileByShareToken = asyncHandler(async (req, res) => {
     const currentUserId = getUserId(req);
     const isOwner = !!(currentUserId && file.userId === currentUserId);
 
+    if (file.sharePassword) {
+        if (!password) return res.status(401).json({ message: 'Password required', requiresPassword: true });
+        const bcrypt = require('bcrypt');
+        const isMatch = await bcrypt.compare(password, file.sharePassword);
+        if (!isMatch) return res.status(401).json({ message: 'Invalid password', requiresPassword: true });
+    }
+
     if (!isOwner) {
         if (file.shareViewLimit && file.shareViews >= file.shareViewLimit) return res.status(410).json({ message: 'Share link view limit reached' });
-
-        if (file.sharePassword) {
-            if (!password) return res.status(401).json({ message: 'Password required', requiresPassword: true });
-            const bcrypt = require('bcrypt');
-            const isMatch = await bcrypt.compare(password, file.sharePassword);
-            if (!isMatch) return res.status(401).json({ message: 'Invalid password', requiresPassword: true });
-        }
 
         await file.update({ shareViews: (file.shareViews || 0) + 1 });
     }
@@ -903,16 +922,16 @@ const downloadFileByShareToken = asyncHandler(async (req, res) => {
     const currentUserId = getUserId(req);
     const isOwner = !!(currentUserId && file.userId === currentUserId);
 
+    if (file.sharePassword) {
+        if (!password) return res.status(401).json({ message: 'Password required', requiresPassword: true });
+        const bcrypt = require('bcrypt');
+        const isMatch = await bcrypt.compare(password, file.sharePassword);
+        if (!isMatch) return res.status(401).json({ message: 'Invalid password', requiresPassword: true });
+    }
+
     if (!isOwner) {
         if (file.shareExpiresAt && new Date() > new Date(file.shareExpiresAt)) return res.status(410).json({ message: 'Share link has expired' });
         if (file.shareDownloadLimit && file.shareDownloads >= file.shareDownloadLimit) return res.status(410).json({ message: 'Share link download limit reached. No more downloads are allowed.' });
-
-        if (file.sharePassword) {
-            if (!password) return res.status(401).json({ message: 'Password required', requiresPassword: true });
-            const bcrypt = require('bcrypt');
-            const isMatch = await bcrypt.compare(password, file.sharePassword);
-            if (!isMatch) return res.status(401).json({ message: 'Invalid password', requiresPassword: true });
-        }
     }
 
     // Only count actual download button clicks (dl=1 or download=true), NOT inline preview/streaming

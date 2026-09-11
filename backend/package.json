@@ -5,7 +5,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js",
+    "dev": "node --watch server.js",
     "test": "echo \"No tests configured\" && exit 0"
   },
   "keywords": ["vibna", "storage", "api", "postgresql", "cloudinary", "firebase"],

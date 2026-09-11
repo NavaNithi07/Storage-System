@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle, XCircle, File as FileIcon, Trash2, Edit2, Copy, Download } from 'lucide-react';
+import { CheckCircle, XCircle, File as FileIcon, Trash2, Edit2, Copy, Download, Share2 } from 'lucide-react';
 
 import api from '../services/api';
 import { Card } from './ui/Card';
@@ -8,6 +8,7 @@ import { useToast } from '../context/ToastContext';
 import { useFileContext } from '../context/FileContext';
 import { copyLinkToClipboard, getFrontendBaseUrl } from '../lib/utils';
 import FileThumbnail from './FileThumbnail';
+import ShareModal from './ShareModal';
 
 const MAX_UPLOAD_SIZE_BYTES = 1024 * 1024 * 1024; // 1GB
 const MAX_UPLOAD_SIZE_LABEL = '1GB';
@@ -30,9 +31,17 @@ export default function UploadContainer({ title, category, icon: Icon, supported
   const [recentFiles, setRecentFiles] = useState([]);
   const [editingFileId, setEditingFileId] = useState(null);
   const [newFileName, setNewFileName] = useState('');
+  const [selectedShareFile, setSelectedShareFile] = useState(null);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const toast = useToast();
   const { bumpRefresh, refreshKey } = useFileContext();
   const navigate = useNavigate();
+
+  const handleShare = (e, rf) => {
+    e.stopPropagation();
+    setSelectedShareFile(rf);
+    setIsShareModalOpen(true);
+  };
   
   const inputRef = useRef(null);
   const recentClickTimeoutRef = useRef({});
@@ -503,6 +512,9 @@ export default function UploadContainer({ title, category, icon: Icon, supported
                   <button onClick={(e) => startRename(e, rf)} className="p-2 rounded-lg hover:bg-blue-500/20 text-blue-400 transition-colors" title="Rename">
                     <Edit2 size={14} />
                   </button>
+                  <button onClick={(e) => handleShare(e, rf)} className="p-2 rounded-lg hover:bg-[#d4af37]/20 text-[#d4af37] transition-colors" title="Share with Password">
+                    <Share2 size={14} />
+                  </button>
                   <button onClick={(e) => copyLink(e, rf)} className="p-2 rounded-lg hover:bg-emerald-500/20 text-emerald-400 transition-colors" title="Copy Link">
                     <Copy size={14} />
                   </button>
@@ -517,6 +529,17 @@ export default function UploadContainer({ title, category, icon: Icon, supported
             ))}
           </div>
         </Card>
+      )}
+
+      {selectedShareFile && (
+        <ShareModal
+          isOpen={isShareModalOpen}
+          onClose={() => {
+            setIsShareModalOpen(false);
+            fetchRecentFiles();
+          }}
+          file={selectedShareFile}
+        />
       )}
     </div>
   );
