@@ -1,7 +1,7 @@
 import { useContext, useState, useRef, useEffect } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Settings, LogOut, User, ChevronDown, Circle } from 'lucide-react';
+import { Settings, LogOut, User, ChevronDown, Circle, Menu } from 'lucide-react';
 import Sidebar from './Sidebar';
 import vibnaLogo from '../Vibna.png';
 import { AuthContext } from '../../context/AuthContext';
@@ -10,6 +10,7 @@ const DashboardLayout = () => {
   const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const dropdownRef = useRef(null);
 
   // Close dropdown on outside click and handle inactivity logout (15 mins)
@@ -64,10 +65,10 @@ const DashboardLayout = () => {
       <img
         src={user.avatar}
         alt={user?.name || 'User'}
-        className="w-10 h-10 rounded-full object-cover border-2 border-[#d4af37]/30"
+        className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-[#d4af37]/30"
       />
     ) : (
-      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#D4A437] to-[#B8860B] flex items-center justify-center text-black font-bold text-base select-none border-2 border-[#d4af37]/30">
+      <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-[#D4A437] to-[#B8860B] flex items-center justify-center text-black font-bold text-sm sm:text-base select-none border-2 border-[#d4af37]/30">
         {user?.name ? user.name.charAt(0).toUpperCase() : <User size={18} />}
       </div>
     );
@@ -86,19 +87,27 @@ const DashboardLayout = () => {
     );
 
   return (
-    <div className="flex min-h-screen bg-black text-[#F5F5F5] selection:bg-[#d4af37]/30 selection:text-white">
-      <Sidebar />
-      <main className="flex-1 overflow-x-hidden flex flex-col">
+    <div className="flex min-h-screen bg-black text-[#F5F5F5] selection:bg-[#d4af37]/30 selection:text-white w-full overflow-x-hidden">
+      <Sidebar mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
+      <main className="flex-1 min-w-0 overflow-x-hidden flex flex-col">
         {/* ── Header ── */}
-        <header className="shrink-0 border-b border-[#d4af37]/10 bg-[#111111]/80 backdrop-blur-xl flex items-center justify-between px-6 py-4 z-40 sticky top-0">
-          {/* Left – Logo */}
-          <div className="flex items-center gap-4">
+        <header className="shrink-0 border-b border-[#d4af37]/10 bg-[#111111]/90 backdrop-blur-xl flex items-center justify-between px-3 sm:px-6 py-3.5 z-40 sticky top-0">
+          {/* Left – Mobile Hamburger & Logo */}
+          <div className="flex items-center gap-2 sm:gap-4">
+            <button
+              onClick={() => setMobileMenuOpen(true)}
+              className="md:hidden p-2 rounded-xl bg-[#d4af37]/10 text-[#d4af37] hover:bg-[#d4af37]/20 transition-colors"
+              aria-label="Open navigation menu"
+            >
+              <Menu size={22} />
+            </button>
+            
             <img
               src={vibnaLogo}
               alt="Vibna logo"
-              className="w-10 h-10 object-contain mix-blend-screen drop-shadow-[0_0_10px_rgba(212,164,55,0.3)]"
+              className="w-8 h-8 sm:w-10 sm:h-10 object-contain mix-blend-screen drop-shadow-[0_0_10px_rgba(212,164,55,0.3)]"
             />
-            <span className="text-xl font-extrabold tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-white to-[#d4af37]">
+            <span className="text-sm sm:text-lg md:text-xl font-extrabold tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-white to-[#d4af37] truncate">
               VIBNA STORAGE
             </span>
           </div>
@@ -107,21 +116,21 @@ const DashboardLayout = () => {
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setDropdownOpen((prev) => !prev)}
-              className="flex items-center gap-3 px-3 py-2 rounded-2xl hover:bg-[#d4af37]/10 transition-colors duration-200 focus:outline-none"
+              className="flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-1.5 sm:py-2 rounded-2xl hover:bg-[#d4af37]/10 transition-colors duration-200 focus:outline-none"
             >
               {/* Avatar with online dot */}
-              <div className="relative">
+              <div className="relative shrink-0">
                 <AvatarSmall />
                 {/* Green online dot */}
                 <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-[#111111]" />
               </div>
 
-              {/* Username & Bio displayed on top right corner */}
-              <div className="flex flex-col text-left max-w-[140px] md:max-w-[180px] min-w-[70px]">
-                <span className="text-sm font-bold text-white truncate leading-tight" title={user?.username || user?.name || 'User'}>
+              {/* Username & Bio */}
+              <div className="hidden sm:flex flex-col text-left max-w-[120px] md:max-w-[180px] min-w-[70px]">
+                <span className="text-xs sm:text-sm font-bold text-white truncate leading-tight" title={user?.username || user?.name || 'User'}>
                   {user?.username || user?.name || 'User'}
                 </span>
-                <span className="text-[11px] text-[#d4af37] truncate leading-tight font-medium mt-0.5" title={user?.bio || 'No bio set'}>
+                <span className="text-[10px] sm:text-[11px] text-[#d4af37] truncate leading-tight font-medium mt-0.5" title={user?.bio || 'No bio set'}>
                   {user?.bio || 'No bio set'}
                 </span>
               </div>
@@ -209,7 +218,7 @@ const DashboardLayout = () => {
         </header>
 
         {/* ── Page content ── */}
-        <div className="h-full w-full max-w-7xl mx-auto p-4 md:p-8">
+        <div className="h-full w-full max-w-7xl mx-auto p-3 sm:p-5 md:p-8">
           <Outlet />
         </div>
       </main>
