@@ -4,9 +4,10 @@ import { API_BASE_URL } from '../services/api';
 
 const FileContext = createContext(null);
 
-export function FileProvider({ children, pollIntervalMs = 10000 }) {
+export function FileProvider({ children, pollIntervalMs = 60000 }) {
   const [refreshKey, setRefreshKey] = useState(0);
   const [socket, setSocket] = useState(null);
+  const [isConnected, setIsConnected] = useState(false);
   const pollRef = useRef(null);
 
   const bumpRefresh = useCallback(() => {
@@ -31,6 +32,7 @@ export function FileProvider({ children, pollIntervalMs = 10000 }) {
 
     socketInstance.on('connect', () => {
       console.log('[Socket] Connected to Socket.IO server');
+      setIsConnected(true);
     });
 
     socketInstance.on('fileDeleted', (deletedFileId) => {
@@ -55,6 +57,7 @@ export function FileProvider({ children, pollIntervalMs = 10000 }) {
 
     socketInstance.on('disconnect', () => {
       console.log('[Socket] Disconnected from Socket.IO server');
+      setIsConnected(false);
     });
 
     return () => {
@@ -62,13 +65,14 @@ export function FileProvider({ children, pollIntervalMs = 10000 }) {
     };
   }, [bumpRefresh]);
 
-  // Fallback auto-poll every `pollIntervalMs` ms
+  // Fallback auto-poll only if Socket.IO is disconnected
   useEffect(() => {
+    if (isConnected) return; // Skip polling when real-time socket is active
     pollRef.current = setInterval(() => {
       setRefreshKey((k) => k + 1);
     }, pollIntervalMs);
     return () => clearInterval(pollRef.current);
-  }, [pollIntervalMs]);
+  }, [isConnected, pollIntervalMs]);
 
   return (
     <FileContext.Provider value={{ refreshKey, bumpRefresh, socket }}>

@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import { Image as ImageIcon, Video as VideoIcon, FileText as FileIcon } from 'lucide-react';
 import api from '../services/api';
 
+// Global in-memory cache for ObjectURLs so thumbnails don't re-download or flicker on re-renders
+const objectUrlCache = new Map();
+
 export default function FileThumbnail({
   file,
   category,
@@ -10,35 +13,42 @@ export default function FileThumbnail({
   controls = false,
 }) {
   const fileCategory = category || file?.category;
-  const [previewUrl, setPreviewUrl] = useState(null);
+  const fileId = file?._id || file?.id;
+
+  const getInitialUrl = () => {
+    // 1. Direct public/Cloudinary/data URL
+    if (file?.fileUrl && (file.fileUrl.startsWith('http://') || file.fileUrl.startsWith('https://') || file.fileUrl.startsWith('blob:') || file.fileUrl.startsWith('data:'))) {
+      return file.fileUrl;
+    }
+    // 2. Cached ObjectURL from previous fetch
+    if (fileId && objectUrlCache.has(fileId)) {
+      return objectUrlCache.get(fileId);
+    }
+    return null;
+  };
+
+  const [previewUrl, setPreviewUrl] = useState(getInitialUrl);
   const [hasError, setHasError] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!getInitialUrl());
 
   useEffect(() => {
     let cancelled = false;
-    let objectUrl = null;
+
+    const existingUrl = getInitialUrl();
+    if (existingUrl) {
+      setPreviewUrl(existingUrl);
+      setLoading(false);
+      return;
+    }
+
+    if (!fileId || (fileCategory !== 'images' && fileCategory !== 'videos')) {
+      setLoading(false);
+      return;
+    }
 
     const fetchPreview = async () => {
       setHasError(false);
       setLoading(true);
-
-      const fileId = file?._id || file?.id;
-      if (!fileId) {
-        setLoading(false);
-        return;
-      }
-
-      if (fileCategory !== 'images' && fileCategory !== 'videos') {
-        setLoading(false);
-        return;
-      }
-
-      // If file.fileUrl is already a blob URL or data URL
-      if (file?.fileUrl && (file.fileUrl.startsWith('blob:') || file.fileUrl.startsWith('data:'))) {
-        setPreviewUrl(file.fileUrl);
-        setLoading(false);
-        return;
-      }
 
       try {
         const token = localStorage.getItem('token');
@@ -57,7 +67,8 @@ export default function FileThumbnail({
 
         const blob = res.data;
         if (blob && blob.size > 0) {
-          objectUrl = URL.createObjectURL(blob);
+          const objectUrl = URL.createObjectURL(blob);
+          objectUrlCache.set(fileId, objectUrl);
           setPreviewUrl(objectUrl);
         } else {
           setHasError(true);
@@ -82,11 +93,8 @@ export default function FileThumbnail({
 
     return () => {
       cancelled = true;
-      if (objectUrl) {
-        URL.revokeObjectURL(objectUrl);
-      }
     };
-  }, [file?._id, file?.id, fileCategory, file?.fileUrl]);
+  }, [fileId, fileCategory, file?.fileUrl]);
 
   const renderDefaultIcon = () => {
     switch (fileCategory) {
