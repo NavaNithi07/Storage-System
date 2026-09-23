@@ -23,8 +23,6 @@ app.use(helmet({
 app.use(useragent.express());
 
 // ── CORS — Environment-driven origin whitelist ────────────────────────────────
-// In production: set FRONTEND_URL to your Vercel URL (e.g. https://vibna.vercel.app)
-// In development: localhost origins are allowed automatically
 const ALLOWED_ORIGINS = [
   process.env.FRONTEND_URL,
   'http://localhost:3000',
@@ -39,12 +37,19 @@ const ALLOWED_ORIGINS = [
   'http://127.0.0.1:4173',
 ].filter(Boolean);
 
+const isAllowedOrigin = (origin) => {
+  if (!origin) return true;
+  const isLocalhost = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+  const isVercel = /^https:\/\/.*\.vercel\.app$/.test(origin);
+  const isFirebase = /^https:\/\/.*\.firebaseapp\.com$/.test(origin) || /^https:\/\/.*\.web\.app$/.test(origin);
+  const isRender = /^https:\/\/.*\.onrender\.com$/.test(origin);
+  const isNetlify = /^https:\/\/.*\.netlify\.app$/.test(origin);
+  return isLocalhost || isVercel || isFirebase || isRender || isNetlify || ALLOWED_ORIGINS.includes(origin);
+};
+
 const corsOptions = {
   origin: (origin, callback) => {
-    if (!origin) return callback(null, true);
-    const isLocalhost = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
-    const isVercel = /^https:\/\/.*\.vercel\.app$/.test(origin);
-    if (isLocalhost || isVercel || ALLOWED_ORIGINS.includes(origin)) {
+    if (isAllowedOrigin(origin)) {
       return callback(null, true);
     }
     return callback(null, true);
@@ -62,10 +67,10 @@ app.use(cors(corsOptions));
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   if (req.method === 'OPTIONS') {
-    if (!origin || ALLOWED_ORIGINS.includes(origin)) {
+    if (isAllowedOrigin(origin)) {
       res.set('Access-Control-Allow-Origin', origin || '*');
       res.set('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-      res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+      res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
       res.set('Access-Control-Allow-Credentials', 'true');
       res.set('Access-Control-Max-Age', '3600');
       return res.sendStatus(200);
