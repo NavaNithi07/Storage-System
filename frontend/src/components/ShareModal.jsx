@@ -320,23 +320,21 @@ const ShareModal = ({ isOpen, onClose, file, shareUrl: _initialShareUrl }) => {
           className="relative w-full max-w-2xl bg-[#0e0e0e] border border-[#d4af37]/20 rounded-3xl shadow-[0_0_80px_rgba(212,175,55,0.08)] overflow-hidden flex flex-col md:flex-row"
         >
           {/* ── Left: File Info + QR ─────────────────────────────────────── */}
-          <div className="w-full md:w-[42%] bg-[#151515] p-6 border-b md:border-b-0 md:border-r border-[#d4af37]/10 flex flex-col items-center justify-start gap-5">
+          <div className="w-full md:w-[42%] bg-[#151515] p-6 border-b md:border-b-0 md:border-r border-[#d4af37]/10 flex flex-col items-center justify-start gap-4 text-center">
             {/* Header */}
             <div className="self-start flex items-center gap-2">
               <ShieldCheck size={16} className="text-[#d4af37]" />
-              <h3 className="text-white font-bold text-sm tracking-wide uppercase">Secure Sharing</h3>
+              <h3 className="text-white font-bold text-sm tracking-wide uppercase">Document QR Code</h3>
             </div>
 
-            {/* QR Code */}
-            {canonicalUrl ? (
-              <div className="bg-white p-3 rounded-2xl shadow-[0_0_25px_rgba(212,175,55,0.15)]">
-                <QRCode value={canonicalUrl} size={140} level="M" />
-              </div>
-            ) : (
-              <div className="w-full border-2 border-dashed border-[#d4af37]/15 rounded-2xl p-8 text-center text-zinc-600 text-xs leading-relaxed">
-                Generate a link to reveal the QR code
-              </div>
-            )}
+            {/* QR Code — Always points to the document viewer URL */}
+            <div className="bg-white p-3.5 rounded-2xl shadow-[0_0_30px_rgba(212,175,55,0.15)] flex flex-col items-center gap-1.5 transition-transform hover:scale-105">
+              <QRCode value={canonicalUrl || buildCanonicalUrl(file.shareToken, file._id || file.id)} size={145} level="H" />
+            </div>
+
+            <p className="text-[11px] text-[#d4af37] font-semibold flex items-center gap-1.5 bg-[#d4af37]/10 px-3 py-1 rounded-full border border-[#d4af37]/20">
+              <Globe size={12} /> Scan with camera to view document
+            </p>
 
             {/* File meta */}
             <div className="w-full space-y-2 text-left">
