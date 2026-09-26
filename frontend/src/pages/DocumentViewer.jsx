@@ -22,8 +22,7 @@ export default function DocumentViewer() {
   // Share tokens from crypto.randomBytes(32).toString('hex') are exactly 64 lowercase hex chars with NO dashes.
   // UUIDs (Postgres file IDs) always contain dashes: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx.
   // This precise check prevents UUIDs from being misidentified as share tokens.
-  const isShareTokenPattern = (str) => str && /^[0-9a-f]{32,}$/.test(str) && !str.includes('-');
-  const shareToken = shareTokenQuery || (id && isShareTokenPattern(id) ? id : null);
+  const shareToken = shareTokenQuery || id;
   
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -78,37 +77,33 @@ export default function DocumentViewer() {
     try {
       const token = localStorage.getItem('token');
 
-      // ── PATH A: Opened via a share link ──────────────────────────────────────
-      // Password gate is ONLY enforced here (share links).
-      if (shareToken) {
-        let endpoint = `/files/share/${encodeURIComponent(shareToken)}`;
-        if (pwdToTry) endpoint += `?password=${encodeURIComponent(pwdToTry)}`;
+      // ── PATH A: Public Share Access (Supports both share tokens & file IDs) ──────
+      // Try public share endpoint first so scanning QR codes opens the document directly without login
+      let endpoint = `/files/share/${encodeURIComponent(id)}`;
+      if (pwdToTry) endpoint += `?password=${encodeURIComponent(pwdToTry)}`;
 
-        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-        const response = await fetch(`${API_BASE_URL}${endpoint}`, { headers });
-        const data = await response.json();
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, { headers });
+      const data = await response.json();
 
-        if (response.ok) {
-          setRequiresPassword(false);
-          setFile(data);
-          return;
-        }
-
-        if (response.status === 401 && data.requiresPassword) {
-          setRequiresPassword(true);
-          if (pwdToTry) setPasswordError('Incorrect password. Please try again.');
-          return;
-        }
-
-        if (response.status === 410) {
-          throw new Error(data.message || 'This share link has expired or reached view limits.');
-        }
-
-        throw new Error(data.message || 'Failed to load shared document');
+      if (response.ok) {
+        setRequiresPassword(false);
+        setFile(data);
+        return;
       }
 
-      // ── PATH B: Opened directly (dashboard click) ─────────────────────────────
-      // Owner access — never ask for a password.
+      if (response.status === 401 && data.requiresPassword) {
+        setRequiresPassword(true);
+        if (pwdToTry) setPasswordError('Incorrect password. Please try again.');
+        return;
+      }
+
+      if (response.status === 410) {
+        throw new Error(data.message || 'This share link has expired or reached view limits.');
+      }
+
+      // ── PATH B: Owner Direct Access ─────────────────────────────────────────
+      // If public share lookup returned 404 and user is logged in, try owner access endpoint
       if (token) {
         try {
           const { data: authData } = await api.get(`/files/${encodeURIComponent(id)}`);
@@ -130,12 +125,12 @@ export default function DocumentViewer() {
         return;
       }
 
-      throw new Error('Failed to load document');
+      throw new Error(data.message || 'Failed to load document');
     } catch (err) {
       const status = err.response?.status || err.status;
       const errorMsg = err.response?.data?.message || err.message || 'Failed to load document';
 
-      if (status === 401 && !shareToken) {
+      if (status === 401 && !localStorage.getItem('token')) {
         console.warn('[DocumentViewer] Auth failed, redirecting to login');
         navigate('/login', { replace: true });
         return;
@@ -236,11 +231,11 @@ export default function DocumentViewer() {
   const currentUserId = currentUser?._id || currentUser?.id || tokenPayload?.id || tokenPayload?._id;
   const isOwner = file?.isOwner === true || !!(file && currentUserId && (file.userId === currentUserId || file.user === currentUserId));
 
-  const isViewingViaShare = Boolean(shareToken);
-  const activeShareIdentifier = shareToken;
+  const activeShareIdentifier = file?.shareToken || shareTokenQuery || id;
+  const isViewingViaShare = Boolean(!_authToken || !isOwner || activeShareIdentifier);
 
   const getMediaFetchUrl = () => {
-    if (isViewingViaShare && activeShareIdentifier) {
+    if (activeShareIdentifier) {
       let u = `${API_BASE_URL}/files/download-shared/${encodeURIComponent(activeShareIdentifier)}`;
       if (activePassword) u += `?password=${encodeURIComponent(activePassword)}`;
       return u;
@@ -250,7 +245,7 @@ export default function DocumentViewer() {
 
   const pdfUrl = useMemo(() => {
     if (!isPdf || !file) return null;
-    if (isViewingViaShare && activeShareIdentifier) {
+    if (activeShareIdentifier) {
       let u = `${API_BASE_URL}/files/download-shared/${encodeURIComponent(activeShareIdentifier)}`;
       if (activePassword) u += `?password=${encodeURIComponent(activePassword)}`;
       return u;
@@ -259,7 +254,7 @@ export default function DocumentViewer() {
       return `${API_BASE_URL}/files/preview/${fileId}?token=${encodeURIComponent(_authToken || '')}`;
     }
     return null;
-  }, [isPdf, file, isViewingViaShare, activeShareIdentifier, activePassword, fileId, _authToken]);
+  }, [isPdf, file, activeShareIdentifier, activePassword, fileId, _authToken]);
 
   const pdfSource = useMemo(() => (pdfUrl ? { url: pdfUrl } : null), [pdfUrl]);
 

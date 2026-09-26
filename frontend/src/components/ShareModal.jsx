@@ -65,8 +65,15 @@ const ShareModal = ({ isOpen, onClose, file, shareUrl: _initialShareUrl }) => {
     const token = file.shareToken;
     const fileId = file._id || file.id;
     if (!token && !fileId) return;
+
     const url = buildCanonicalUrl(token, fileId);
     setCanonicalUrl(url);
+
+    // If file is not yet shared, auto-generate a share link so the QR code is immediately active
+    if (!file.isShared && !token && fileId && !isGenerating) {
+      handleGenerate();
+    }
+
     setShareStats({
       hasPassword: !!file.sharePassword || !!file.hasPassword,
       shareDownloadLimit: file.shareDownloadLimit ?? null,
