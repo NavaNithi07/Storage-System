@@ -18,11 +18,12 @@ const useragent = require('express-useragent');
 app.use(helmet({
   crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
   crossOriginEmbedderPolicy: false,
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
 }));
 
 app.use(useragent.express());
 
-// ── CORS — Environment-driven origin whitelist ────────────────────────────────
+// ── CORS — Environment-driven origin whitelist + dynamic reflection ───────────
 const ALLOWED_ORIGINS = [
   process.env.FRONTEND_URL,
   'http://localhost:3000',
@@ -39,23 +40,17 @@ const ALLOWED_ORIGINS = [
 
 const isAllowedOrigin = (origin) => {
   if (!origin) return true;
-  const isLocalhost = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
-  const isVercel = /^https:\/\/.*\.vercel\.app$/.test(origin);
-  const isFirebase = /^https:\/\/.*\.firebaseapp\.com$/.test(origin) || /^https:\/\/.*\.web\.app$/.test(origin);
-  const isRender = /^https:\/\/.*\.onrender\.com$/.test(origin);
-  const isNetlify = /^https:\/\/.*\.netlify\.app$/.test(origin);
-  return isLocalhost || isVercel || isFirebase || isRender || isNetlify || ALLOWED_ORIGINS.includes(origin);
+  // Always permit any web origin, while reflecting it back for credentials compatibility
+  return true;
 };
 
 const corsOptions = {
   origin: (origin, callback) => {
-    if (isAllowedOrigin(origin)) {
-      return callback(null, true);
-    }
+    // Dynamically reflect origin to support credentials: true across all deployment links
     return callback(null, true);
   },
   credentials: true,
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin', 'Cache-Control', 'Pragma'],
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   optionsSuccessStatus: 200,
   maxAge: 3600,
@@ -63,19 +58,29 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-// Pre-flight handler for Express v5 compatibility
+// Explicit pre-flight handler guaranteeing 200 OK and all headers for OPTIONS requests
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   if (req.method === 'OPTIONS') {
-    if (isAllowedOrigin(origin)) {
-      res.set('Access-Control-Allow-Origin', origin || '*');
-      res.set('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-      res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
-      res.set('Access-Control-Allow-Credentials', 'true');
-      res.set('Access-Control-Max-Age', '3600');
-      return res.sendStatus(200);
-    }
+    res.set('Access-Control-Allow-Origin', origin || '*');
+    res.set('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+    res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, Cache-Control, Pragma');
+    res.set('Access-Control-Allow-Credentials', 'true');
+    res.set('Access-Control-Max-Age', '3600');
+    res.set('Cross-Origin-Resource-Policy', 'cross-origin');
+    return res.sendStatus(200);
   }
+  next();
+});
+
+// Response header safety net: ensure CORS and CORP headers are set on all responses
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin) {
+    res.set('Access-Control-Allow-Origin', origin);
+    res.set('Access-Control-Allow-Credentials', 'true');
+  }
+  res.set('Cross-Origin-Resource-Policy', 'cross-origin');
   next();
 });
 
@@ -121,6 +126,20 @@ app.get('/health', (req, res) => {
   res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
+// Database connection middleware for Vercel serverless environment (must run before routes)
+let isDbConnected = false;
+app.use(async (req, res, next) => {
+  if (!isDbConnected && process.env.VERCEL) {
+    try {
+      await connectDB();
+      isDbConnected = true;
+    } catch (err) {
+      console.error('[Vercel Serverless DB Error]', err);
+    }
+  }
+  next();
+});
+
 // ── Routes ────────────────────────────────────────────────────────────────────
 app.use(sanitizeInputs);
 app.use('/api/auth', require('./routes/authRoutes'));
@@ -160,20 +179,6 @@ const startServer = async () => {
     server.timeout = 0;
     server.headersTimeout = 0;
 };
-
-// Database connection middleware for Vercel serverless environment
-let isDbConnected = false;
-app.use(async (req, res, next) => {
-  if (!isDbConnected && process.env.VERCEL) {
-    try {
-      await connectDB();
-      isDbConnected = true;
-    } catch (err) {
-      console.error('[Vercel Serverless DB Error]', err);
-    }
-  }
-  next();
-});
 
 // Only start standalone app.listen server when NOT on Vercel serverless
 if (!process.env.VERCEL) {

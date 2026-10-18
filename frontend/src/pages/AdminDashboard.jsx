@@ -67,7 +67,8 @@ const groupActivities = (activities) => {
   return Object.entries(groups).filter(([_, items]) => items.length > 0);
 };
 // Use dedicated VITE_SOCKET_URL so it works when VITE_API_BASE_URL is a relative path (Vite proxy mode)
-const socketUrl = import.meta.env.VITE_SOCKET_URL || 'https://vibna-storage-backend.onrender.com';
+const rawSocketUrl = import.meta.env.VITE_SOCKET_URL || 'https://vibna-storage-backend.onrender.com';
+const socketUrl = rawSocketUrl.replace(/\/+$/, '');
 
 export default function AdminDashboard() {
   const navigate = useNavigate();

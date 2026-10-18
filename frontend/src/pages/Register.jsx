@@ -48,17 +48,23 @@ const Register = () => {
 
   const passValidation = validatePassword(password);
 
-  // ── Handle Google redirect result (fires after signInWithRedirect completes) ──
+  // ── Handle Google redirect result (fires ONLY after signInWithRedirect completes) ──
   useEffect(() => {
     if (!auth) return; // Firebase not configured
+
+    // Only process redirect result if user explicitly initiated Google redirect sign-up
+    const storedIntent = sessionStorage.getItem(GOOGLE_INTENT_KEY);
+    if (!storedIntent) {
+      // Normal page open — do not call getRedirectResult to prevent false network errors
+      return;
+    }
 
     const handleRedirectResult = async () => {
       try {
         const result = await getRedirectResult(auth);
-        if (!result?.user) return; // No redirect result — nothing to do
-
-        const storedIntent = sessionStorage.getItem(GOOGLE_INTENT_KEY);
         sessionStorage.removeItem(GOOGLE_INTENT_KEY);
+
+        if (!result?.user) return; // No redirect result — nothing to do
 
         if (storedIntent === 'login') {
           navigate('/login', { replace: true });
@@ -80,6 +86,7 @@ const Register = () => {
           setGoogleLoading(false);
         }
       } catch (err) {
+        sessionStorage.removeItem(GOOGLE_INTENT_KEY);
         if (err.code === 'auth/no-auth-event' || err.code === 'auth/popup-closed-by-user') {
           return;
         }
@@ -203,14 +210,10 @@ const Register = () => {
       let errorMessage = 'Failed to register';
       if (err.response?.data?.message) {
         errorMessage = err.response.data.message;
+      } else if (err.code === 'ERR_NETWORK' || err.message?.includes('Network Error') || err.message?.includes('Failed to fetch') || err.message?.includes('timeout') || err.code === 'ECONNABORTED') {
+        errorMessage = 'Network error: Cannot reach the server. The backend service may be waking up. Please try again in a few moments.';
       } else if (err.message) {
-        if (err.message.includes('Failed to fetch') || err.message.includes('ERR_')) {
-          errorMessage = 'Network error: Unable to connect to server. Please check if the backend is running on http://localhost:5000';
-        } else if (err.code === 'ERR_NETWORK') {
-          errorMessage = 'Network error: Cannot reach the server';
-        } else {
-          errorMessage = err.message;
-        }
+        errorMessage = err.message;
       }
       setError(errorMessage);
     }

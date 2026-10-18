@@ -17,7 +17,8 @@ export function FileProvider({ children, pollIntervalMs = 60000 }) {
   // Initialize Socket.IO connection
   useEffect(() => {
     // Use dedicated VITE_SOCKET_URL so it works when VITE_API_BASE_URL is a relative path (Vite proxy mode)
-    const socketUrl = import.meta.env.VITE_SOCKET_URL || 'https://vibna-storage-backend.onrender.com';
+    const rawSocketUrl = import.meta.env.VITE_SOCKET_URL || 'https://vibna-storage-backend.onrender.com';
+    const socketUrl = rawSocketUrl.replace(/\/+$/, '');
 
     console.log('[Socket] Initializing connection to:', socketUrl);
     

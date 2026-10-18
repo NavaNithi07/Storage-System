@@ -1,13 +1,27 @@
 import axios from 'axios';
 
-export const API_BASE_URL =
+const rawBaseUrl =
     import.meta.env.VITE_API_BASE_URL || 'https://vibna-storage-backend.onrender.com/api';
+
+// Strip any trailing slashes to guarantee clean path joins
+export const API_BASE_URL = rawBaseUrl.replace(/\/+$/, '');
+
+// Proactively ping backend /health to awaken Render free-tier instances from cold sleep
+export const wakeUpBackend = () => {
+    try {
+        const rootUrl = API_BASE_URL.replace(/\/api\/?$/, '');
+        fetch(`${rootUrl}/health`, { method: 'GET', mode: 'cors' }).catch(() => {});
+    } catch (_) {}
+};
+
+// Fire background ping immediately so backend begins spinning up while user browses
+wakeUpBackend();
 
 const api = axios.create({
     baseURL: API_BASE_URL,
     maxContentLength: Infinity,
     maxBodyLength: Infinity,
-    timeout: 0,
+    timeout: 60000, // 60s timeout to allow Render free tier instances to spin up
 });
 api.interceptors.request.use((config) => {
     const token = localStorage.getItem('token');

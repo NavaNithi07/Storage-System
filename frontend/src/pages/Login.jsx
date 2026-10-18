@@ -67,23 +67,27 @@ const Login = ({ mode }) => {
   const [success, setSuccess] = useState(false);
   const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
 
-  // ── Handle Google redirect result (fires after signInWithRedirect completes) ──
+  // ── Handle Google redirect result (fires ONLY after signInWithRedirect completes) ──
   useEffect(() => {
     if (!auth) return; // Firebase not configured
+
+    // Only process redirect result if user explicitly initiated Google redirect sign-in
+    const storedIntent = sessionStorage.getItem(GOOGLE_INTENT_KEY);
+    if (!storedIntent) {
+      // Normal page open — do not call getRedirectResult to prevent false network errors
+      return;
+    }
 
     const handleRedirectResult = async () => {
       try {
         const result = await getRedirectResult(auth);
-        if (!result?.user) return; // No redirect result pending — nothing to do
+        sessionStorage.removeItem(GOOGLE_INTENT_KEY); // Clean up intent immediately
 
-        // Read the intent we stored before the redirect
-        const storedIntent = sessionStorage.getItem(GOOGLE_INTENT_KEY);
-        sessionStorage.removeItem(GOOGLE_INTENT_KEY); // clean up immediately
+        if (!result?.user) return; // No redirect result pending — nothing to do
 
         // This is the Login page, so intent must be 'login' (isSignUp = false).
         // If intent was 'register', let the Register page handle it — we should not process it here.
         if (storedIntent === 'register') {
-          // The redirect came from the Register page. Navigate there so it can handle getRedirectResult.
           navigate('/register', { replace: true });
           return;
         }
@@ -110,6 +114,7 @@ const Login = ({ mode }) => {
           setGoogleLoading(false);
         }
       } catch (err) {
+        sessionStorage.removeItem(GOOGLE_INTENT_KEY);
         if (err.code === 'auth/no-auth-event' || err.code === 'auth/popup-closed-by-user') {
           return; // User cancelled — silent
         }
@@ -217,14 +222,10 @@ const Login = ({ mode }) => {
       let errorMessage = 'Failed to login';
       if (err.response?.data?.message) {
         errorMessage = err.response.data.message;
+      } else if (err.code === 'ERR_NETWORK' || err.message?.includes('Network Error') || err.message?.includes('Failed to fetch') || err.message?.includes('timeout') || err.code === 'ECONNABORTED') {
+        errorMessage = 'Network error: Cannot reach the server. The backend service may be waking up (please wait 30–60 seconds on free tier) or check your connection.';
       } else if (err.message) {
-        if (err.message.includes('Failed to fetch') || err.message.includes('ERR_')) {
-          errorMessage = 'Network error: Unable to connect to server. Please check if the backend is running on http://localhost:5000';
-        } else if (err.code === 'ERR_NETWORK') {
-          errorMessage = 'Network error: Cannot reach the server';
-        } else {
-          errorMessage = err.message;
-        }
+        errorMessage = err.message;
       }
       setError(errorMessage);
       setLoading(false);
