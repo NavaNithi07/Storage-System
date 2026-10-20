@@ -2,7 +2,7 @@ import { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Loader2, Mail, Lock, ArrowRight, ShieldCheck, AlertTriangle, Eye, EyeOff } from 'lucide-react';
+import { Loader2, Mail, Lock, ArrowRight, ArrowLeft, Home, ShieldCheck, AlertTriangle, Eye, EyeOff } from 'lucide-react';
 import vibnaLogo from '../components/Vibna.png';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -301,8 +301,12 @@ const Login = ({ mode }) => {
 
         {/* Content Centered */}
         <div className="relative z-10 flex flex-col items-center text-center w-full max-w-lg">
-          {/* Logo with sweep animation */}
-          <div className="relative overflow-hidden flex items-center justify-center p-2 mb-8 w-52 h-52">
+          {/* Logo with sweep animation - links back to landing page */}
+          <Link
+            to="/"
+            title="Return to Landing Page"
+            className="relative overflow-hidden flex items-center justify-center p-2 mb-8 w-52 h-52 group cursor-pointer hover:scale-105 transition-transform"
+          >
             <motion.img
               initial={{ opacity: 0, scale: 0.75, filter: 'drop-shadow(0 0 0px rgba(212,164,55,0))' }}
               animate={{
@@ -327,7 +331,7 @@ const Login = ({ mode }) => {
               className="absolute top-0 h-full w-[60px] bg-gradient-to-r from-transparent via-[#d4af37]/30 to-transparent pointer-events-none"
               style={{ mixBlendMode: 'screen' }}
             />
-          </div>
+          </Link>
 
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -363,6 +367,16 @@ const Login = ({ mode }) => {
         {/* Soft background light */}
         <div className="absolute top-10 right-10 w-[300px] h-[300px] rounded-full bg-[#D4A437]/5 blur-[100px] pointer-events-none" />
 
+        {/* Back to Home Button */}
+        <Link
+          to="/"
+          className="absolute top-6 right-6 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 transition-all z-20 group"
+          title="Return to Landing Page"
+        >
+          <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" />
+          <span>Home</span>
+        </Link>
+
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -372,7 +386,7 @@ const Login = ({ mode }) => {
           {/* Header */}
           <div className="mb-6 text-center lg:text-left">
             <div className="mb-4 flex items-center justify-center lg:justify-start gap-4">
-              <div className="relative overflow-hidden w-14 h-14 shrink-0">
+              <Link to="/" title="Return to Landing Page" className="relative overflow-hidden w-14 h-14 shrink-0 group hover:scale-105 transition-transform">
                 <motion.img
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -387,7 +401,7 @@ const Login = ({ mode }) => {
                   transition={{ delay: 0.4, duration: 1.2, ease: 'easeInOut' }}
                   className="absolute top-0 h-full w-[25px] bg-gradient-to-r from-transparent via-[#d4af37]/20 to-transparent pointer-events-none"
                 />
-              </div>
+              </Link>
               <div>
                 <h2 className="text-3xl font-extrabold tracking-tight text-white">
                   {isUrlAdmin ? 'Admin Portal' : 'Welcome Back'}
@@ -397,6 +411,16 @@ const Login = ({ mode }) => {
                 </p>
               </div>
             </div>
+
+            {/* Banner if redirected from document viewer or other protected page */}
+            {new URLSearchParams(location.search).get('redirect') && (
+              <div className="mb-4 p-3 rounded-xl bg-[#d4af37]/10 border border-[#d4af37]/30 flex items-center justify-between text-xs text-amber-200">
+                <span>Sign in required to view that file.</span>
+                <Link to="/" className="text-[#d4af37] underline hover:text-white font-semibold ml-2 shrink-0">
+                  Go to Home →
+                </Link>
+              </div>
+            )}
           </div>
 
           {/* Card with shining border */}

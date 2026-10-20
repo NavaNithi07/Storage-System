@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   LayoutDashboard, 
@@ -61,22 +61,24 @@ const Sidebar = ({ mobileMenuOpen, setMobileMenuOpen }) => {
       >
         {/* Header/Logo */}
         <div className="h-20 flex items-center justify-between px-5 border-b border-[#d4af37]/10 relative">
-          <div className={cn("flex items-center gap-3 overflow-hidden transition-all duration-200", collapsed && "opacity-0 w-0 hidden")}> 
+          <Link to="/" title="Go to Landing Page" className={cn("flex items-center gap-3 overflow-hidden transition-all duration-200 group hover:opacity-90", collapsed && "opacity-0 w-0 hidden")}> 
             <img
               src={vibnaLogo}
               alt="Vibna logo"
-              className="w-12 h-12 object-contain mix-blend-screen"
+              className="w-12 h-12 object-contain mix-blend-screen group-hover:scale-105 transition-transform"
             />
             <span className="text-base font-extrabold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-white to-[#d4af37] whitespace-nowrap">
               VIBNA
             </span>
-          </div>
+          </Link>
           {collapsed && (
-            <img
-              src={vibnaLogo}
-              alt="Vibna logo"
-              className="w-10 h-10 object-contain mix-blend-screen shrink-0 mx-auto"
-            />
+            <Link to="/" title="Go to Landing Page" className="mx-auto hover:scale-105 transition-transform">
+              <img
+                src={vibnaLogo}
+                alt="Vibna logo"
+                className="w-10 h-10 object-contain mix-blend-screen shrink-0"
+              />
+            </Link>
           )}
 
           <button 

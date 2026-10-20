@@ -2,7 +2,7 @@ import { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Loader2, Mail, Lock, User, ArrowRight, ShieldCheck, CheckCircle2, AlertTriangle, Eye, EyeOff } from 'lucide-react';
+import { Loader2, Mail, Lock, User, ArrowRight, ArrowLeft, ShieldCheck, CheckCircle2, AlertTriangle, Eye, EyeOff } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Card } from '../components/ui/Card';
@@ -242,10 +242,12 @@ const Register = () => {
         />
 
         <div className="relative z-10 flex flex-col items-center justify-center text-center mt-auto mb-auto">
-          <img src={vibnaLogo} alt="Vibna logo" className="w-32 h-32 object-contain mix-blend-screen mb-6 drop-shadow-[0_0_20px_rgba(212,164,55,0.4)]" />
-          <h1 className="text-4xl font-extrabold tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-white to-[#d4af37] mb-4 text-center">
-            VIBNA
-          </h1>
+          <Link to="/" title="Return to Landing Page" className="group hover:scale-105 transition-transform flex flex-col items-center">
+            <img src={vibnaLogo} alt="Vibna logo" className="w-32 h-32 object-contain mix-blend-screen mb-6 drop-shadow-[0_0_20px_rgba(212,164,55,0.4)]" />
+            <h1 className="text-4xl font-extrabold tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-white to-[#d4af37] mb-4 text-center">
+              VIBNA
+            </h1>
+          </Link>
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -274,6 +276,16 @@ const Register = () => {
 
       {/* RIGHT SIDE - Register Form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 relative overflow-y-auto max-h-screen">
+        {/* Back to Home Button */}
+        <Link
+          to="/"
+          className="absolute top-6 right-6 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 transition-all z-20 group"
+          title="Return to Landing Page"
+        >
+          <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" />
+          <span>Home</span>
+        </Link>
+
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -281,7 +293,9 @@ const Register = () => {
           className="w-full max-w-md my-auto pb-10 pt-10 lg:pt-0"
         >
           <div className="mb-8 lg:hidden flex justify-center">
-             <img src={vibnaLogo} alt="Vibna logo" className="w-16 h-16 object-contain mix-blend-screen drop-shadow-[0_0_15px_rgba(212,164,55,0.4)]" />
+            <Link to="/" title="Return to Landing Page" className="hover:scale-105 transition-transform">
+              <img src={vibnaLogo} alt="Vibna logo" className="w-16 h-16 object-contain mix-blend-screen drop-shadow-[0_0_15px_rgba(212,164,55,0.4)]" />
+            </Link>
           </div>
 
           <div className="mb-8 text-center lg:text-left">

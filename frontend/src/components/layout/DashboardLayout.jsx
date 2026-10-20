@@ -1,5 +1,5 @@
 import { useContext, useState, useRef, useEffect } from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
+import { Outlet, useNavigate, Link } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Settings, LogOut, User, ChevronDown, Circle, Menu } from 'lucide-react';
 import Sidebar from './Sidebar';
@@ -102,14 +102,16 @@ const DashboardLayout = () => {
               <Menu size={22} />
             </button>
             
-            <img
-              src={vibnaLogo}
-              alt="Vibna logo"
-              className="w-8 h-8 sm:w-10 sm:h-10 object-contain mix-blend-screen drop-shadow-[0_0_10px_rgba(212,164,55,0.3)]"
-            />
-            <span className="text-sm sm:text-lg md:text-xl font-extrabold tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-white to-[#d4af37] truncate">
-              VIBNA STORAGE
-            </span>
+            <Link to="/" title="Go to Landing Page" className="flex items-center gap-2 sm:gap-3 hover:opacity-90 transition-opacity group">
+              <img
+                src={vibnaLogo}
+                alt="Vibna logo"
+                className="w-8 h-8 sm:w-10 sm:h-10 object-contain mix-blend-screen drop-shadow-[0_0_10px_rgba(212,164,55,0.3)] group-hover:scale-105 transition-transform"
+              />
+              <span className="text-sm sm:text-lg md:text-xl font-extrabold tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-white to-[#d4af37] truncate">
+                VIBNA STORAGE
+              </span>
+            </Link>
           </div>
 
           {/* Right – Profile Panel */}
